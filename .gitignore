@@ -1,6 +1,4 @@
-"model developement"/"data scraping"/valid_proxies/*.txt
-"model developement"/"data scraping"/test_utils/
-"model developement"/"data scraping"/scraped_data/*.json
-"model developement"/"data scraping"/.pytest_cache/
-"model developement"/"data scraping"/utils/__pycache__/
-"model developement"
+model developement/data scraping/valid_proxies/*.txt
+model developement/data scraping/test_utils/
+model developement/data scraping/.pytest_cache/
+model developement/data scraping/utils/__pycache__/
