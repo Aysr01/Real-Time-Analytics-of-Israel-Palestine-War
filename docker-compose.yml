@@ -14,7 +14,7 @@ services:
     user: root
     volumes:
       - ./spark/logs:/opt/bitnami/spark/logs
-      - ./spark/apps:/opt/bitnami/spark/apps
+      - ./spark/jobs:/opt/bitnami/spark/jobs
     ports:
       - '8080:8080'
       - '7077:7077'
@@ -22,13 +22,13 @@ services:
       ispa:
         ipv4_address: 172.18.0.2
 
-  spark-worker:
+  spark-worker1:
     image: bitnami/spark:latest
-    container_name: spark-worker
-    hostname: spark-worker
+    container_name: spark-worker1
+    hostname: spark-worker1
     user: root
     ports:
-      - '8085:8081'
+      - '8081:8081'
     depends_on:
       - spark-master
     environment:
@@ -42,8 +42,26 @@ services:
       ispa:
         ipv4_address: 172.18.0.3
 
+  spark-worker2:
+    image: bitnami/spark:latest
+    container_name: spark-worker2
+    hostname: spark-worker2
+    user: root
+    ports:
+      - '8082:8081'
+    depends_on:
+      - spark-master
+    environment:
+      - MASTER_URL=spark://172.18.0.2:7077
+      - SPARK_MODE=worker
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+    volumes:
+      - ./spark/logs:/opt/bitnami/spark/logs
+    networks:
+      ispa:
+        ipv4_address: 172.18.0.7
 
-    
   zookeeper:
     image: 'bitnami/zookeeper:latest'
     container_name: zookeeper
@@ -68,14 +86,17 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://172.18.0.5:9092
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_TOPIC1_NAME=reddit_comments
+      - KAFKA_TOPIC2_NAME=reddit_submissions
+      - TOPICS_PARTITIONS=1
     volumes:
-      - ./kafka/logs:/bitnami/kafka/logs
+      - ./kafka/logs:/opt/bitnami/kafka/logs
+      - ./scripts/create_topics.sh:/opt/bitnami/kafka/bin/create_topics.sh
     depends_on:
       - zookeeper
     networks:
       ispa:
         ipv4_address: 172.18.0.5
-
 
   scraping_app:
     image: 'python:latest'
