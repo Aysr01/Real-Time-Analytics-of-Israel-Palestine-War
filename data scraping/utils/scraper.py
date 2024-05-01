@@ -5,10 +5,6 @@ import logging
 from tqdm import tqdm
 import queue
 from datetime import datetime
-# import ntlk
-# from nltk.corpus import stopwords
-# nltk.download('stopwords')
-# stop_words = set(stopwords.words('english'))
 
 exec_time = datetime.now().strftime("%Y-%m-%d")
 logging.basicConfig(level=logging.INFO,
@@ -38,33 +34,13 @@ class RedditAPI:
     def fetch_posts(self, search_query: str, sort: str) -> praw.models.Submission:
         posts = self.reddit.subreddit('all').search(search_query, sort=sort, time_filter="year", limit=self.limit)
         return posts
-    
-    # def preprocess_text(self, text):
-    #     tokens = [word.lower() for word in text.split()]
-    #     filtered_tokens = [token for token in tokens if token.isalnum() and token not in stop_words]
-    #     return filtered_tokens
-    
-    # def is_relevant_post(self, post):
-    #     processed_title = self.preprocess_text(post.title)
-    #     processed_selftext = self.preprocess_text(post.selftext)
-    #     if any(keyword in processed_title for keyword in israel_keywords) and \
-    #     any(keyword in processed_title for keyword in palestine_keywords):
-    #         return True
-        
-    #     if any(keyword in processed_selftext for keyword in israel_keywords) and \
-    #     any(keyword in processed_selftext for keyword in palestine_keywords):
-    #         return True
-    #     return False
 
     def remove_redundancy(self, posts):
         posts_dict = {}
         for post in posts:
             posts_dict[post.id] = post
         return list(posts_dict.values())
-    
-
-
-    
+        
     def extract_data(self, posts):
         i = 0
         desired_data = []

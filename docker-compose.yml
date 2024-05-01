@@ -86,12 +86,8 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://172.18.0.5:9092
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_TOPIC1_NAME=reddit_comments
-      - KAFKA_TOPIC2_NAME=reddit_submissions
-      - TOPICS_PARTITIONS=1
     volumes:
       - ./kafka/logs:/opt/bitnami/kafka/logs
-      - ./scripts/create_topics.sh:/opt/bitnami/kafka/bin/create_topics.sh
     depends_on:
       - zookeeper
     networks:
@@ -104,14 +100,17 @@ services:
     hostname: app
     ports:
       - '5000:5000'
+    environment:
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REDDIT_USERNAME=${REDDIT_USERNAME}
+      - REDDIT_PASSWORD=${REDDIT_PASSWORD}
     depends_on:
       - kafka
-      - spark-master
     volumes:
-      - ./extracting_app:/app
-      - ./requirements.txt:/app/requirements.txt
-    entrypoint: tail -f /dev/null
-    command: ["python3", "/app/app.py"]
+      - ./data scraping:/app/
+      - ./scripts/python environment.sh:/app/scripts/entrypoint.sh
+    entrypoint: "/bin/bash /app/scripts/entrypoint.sh"
     networks:
       ispa:
         ipv4_address: 172.18.0.6
