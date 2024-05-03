@@ -13,11 +13,12 @@ services:
     hostname: spark-master
     user: root
     volumes:
-      - ./spark/logs:/opt/bitnami/spark/logs
-      - ./spark/jobs:/opt/bitnami/spark/jobs
+      - ./spark/master logs:/opt/bitnami/spark/logs
+      - ./spark/apps:/opt/bitnami/spark/apps
     ports:
       - '8080:8080'
       - '7077:7077'
+      - '4040:4040'
     networks:
       ispa:
         ipv4_address: 172.18.0.2
@@ -37,7 +38,7 @@ services:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
     volumes:
-      - ./spark/logs:/opt/bitnami/spark/logs
+      - ./spark/w1 logs:/opt/bitnami/spark/logs
     networks:
       ispa:
         ipv4_address: 172.18.0.3
@@ -57,7 +58,7 @@ services:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
     volumes:
-      - ./spark/logs:/opt/bitnami/spark/logs
+      - ./spark/w2 logs:/opt/bitnami/spark/logs
     networks:
       ispa:
         ipv4_address: 172.18.0.7
@@ -114,3 +115,16 @@ services:
     networks:
       ispa:
         ipv4_address: 172.18.0.6
+
+  cassandra:
+    image: bitnami/cassandra:latest
+    container_name: cassandra
+    hostname: cassandra
+    ports:
+      - 9042:9042
+    environment:
+      - CASSANDRA_USERNAME=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+    networks:
+      ispa:
+        ipv4_address: 172.18.0.8

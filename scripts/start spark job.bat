@@ -1,0 +1,1 @@
+docker exec -it spark-master spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 '/opt/bitnami/spark/apps/comments count.py'
