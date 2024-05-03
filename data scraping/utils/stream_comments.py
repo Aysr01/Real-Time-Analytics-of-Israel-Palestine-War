@@ -1,6 +1,5 @@
 import praw
 from typing import List, Dict
-from datetime import datetime
 from kafka import KafkaProducer
 import json
 import os
@@ -39,17 +38,26 @@ class StreamData:
             comment_data = {
                 "timestamp": comment.created_utc,
                 "id": comment.id,
-                "submission_id": comment.submission.id,
                 "body": comment.body,
                 "author": comment.author.name,
                 "subreddit_id": comment.subreddit_id,
                 "subreddit": comment.subreddit.display_name,
-                "ups": comment.ups
+                "ups": comment.ups,
+                "parent_id": comment.parent_id,
+                "submission": {
+                "submission_id": comment.submission.id,
+                "submission_title": comment.submission.title,
+                "submission_text": comment.submission.selftext,
+                "submission_author": comment.submission.author.name,
+                "submissions_ups": comment.submission.ups,
+                "submissions_num_comments": comment.submission.num_comments,
+                "submissions_upvote_ratio": comment.submission.upvote_ratio
+                }
             }
             comment_json = json.dumps(comment_data)
             self.producer.send(self.topic, value=comment_json)
             self.producer.flush()
-            logger.info("Comment {} streamed to Kafka topic {}".format(comment.id, self.topic))
+            logger.info("Comment {} from {} streamed to Kafka topic {}".format(comment.id, comment.subreddit, self.topic))
 
     def stream_submissions(self, subreddits: List[str]):
         subreddits = "+".join(subreddits)

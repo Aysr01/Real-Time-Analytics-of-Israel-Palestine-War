@@ -13,12 +13,15 @@ admin_client = KafkaAdminClient(
 
 topics_list = admin_client.list_topics()
 needed_topics = {"reddit_posts", "reddit_comments"}.difference(set(topics_list))
-logger.info(f"Creating topics: {needed_topics}")
+if not needed_topics:
+    logger.info("Topics already exist")
+else:
+    logger.info(f"Creating topics: {needed_topics}")
 
-for topic in needed_topics:
-    topic_object= NewTopic(name=topic, num_partitions=1, replication_factor=1)
-    try:
-        admin_client.create_topics(new_topics=topics_list, validate_only=False)
-        logger.info(f"Topic {topic} created")
-    except Exception as e:
-        logger.error(f"Error creating topic {topic}: {e}")
+    for topic in needed_topics:
+        topic_object= NewTopic(name=topic, num_partitions=1, replication_factor=1)
+        try:
+            admin_client.create_topics(new_topics=topics_list, validate_only=False)
+            logger.info(f"Topic {topic} created")
+        except Exception as e:
+            logger.error(f"Error creating topic {topic}: {e}")
