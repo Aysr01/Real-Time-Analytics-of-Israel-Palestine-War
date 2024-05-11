@@ -3,3 +3,6 @@ data scraping/test_utils/
 data scraping/.pytest_cache/
 data scraping/utils/__pycache__/
 spark_test
+credentials/
+infra/.terraform*
+infra/terraform.tfstate*
