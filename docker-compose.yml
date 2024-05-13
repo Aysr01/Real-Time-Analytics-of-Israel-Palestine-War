@@ -13,12 +13,11 @@ services:
     hostname: spark-master
     user: root
     volumes:
-      - ./spark/master logs:/opt/bitnami/spark/logs
-      - ./spark/apps:/opt/bitnami/spark/apps
+      - ./spark/checkpoint:/tmp/checkpoint
+      - ./spark/utils:/opt/bitnami/spark/utils
     ports:
       - '8080:8080'
       - '7077:7077'
-      - '4040:4040'
     networks:
       ispa:
         ipv4_address: 172.18.0.2
@@ -37,8 +36,6 @@ services:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
-    volumes:
-      - ./spark/w1 logs:/opt/bitnami/spark/logs
     networks:
       ispa:
         ipv4_address: 172.18.0.3
@@ -57,11 +54,9 @@ services:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
-    volumes:
-      - ./spark/w2 logs:/opt/bitnami/spark/logs
     networks:
       ispa:
-        ipv4_address: 172.18.0.7
+        ipv4_address: 172.18.0.4
 
   zookeeper:
     image: 'bitnami/zookeeper:latest'
@@ -73,7 +68,7 @@ services:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
       ispa:
-        ipv4_address: 172.18.0.4
+        ipv4_address: 172.18.0.5
 
   kafka:
     image: 'bitnami/kafka:latest'
@@ -83,24 +78,20 @@ services:
       - '9092:9092'
     environment:
       - KAFKA_BROKER_ID=1
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://172.18.0.5:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://172.18.0.5:9092
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://172.18.0.6:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://172.18.0.6:9092
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
-    volumes:
-      - ./kafka/logs:/opt/bitnami/kafka/logs
     depends_on:
       - zookeeper
     networks:
       ispa:
-        ipv4_address: 172.18.0.5
+        ipv4_address: 172.18.0.6
 
   scraping_app:
     image: 'python:latest'
     container_name: app
     hostname: app
-    ports:
-      - '5000:5000'
     environment:
       - CLIENT_ID=${CLIENT_ID}
       - CLIENT_SECRET=${CLIENT_SECRET}
@@ -110,21 +101,25 @@ services:
       - kafka
     volumes:
       - ./data scraping:/app/
-      - ./scripts/python environment.sh:/app/scripts/entrypoint.sh
     entrypoint: "/bin/bash /app/scripts/entrypoint.sh"
     networks:
       ispa:
-        ipv4_address: 172.18.0.6
+        ipv4_address: 172.18.0.7
 
-  cassandra:
-    image: bitnami/cassandra:latest
-    container_name: cassandra
-    hostname: cassandra
-    ports:
-      - 9042:9042
+  postgres:
+    image: postgres:14.10-bullseye
+    container_name: postgres
+    hostname: postgres
     environment:
-      - CASSANDRA_USERNAME=cassandra
-      - CASSANDRA_PASSWORD=cassandra
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ispac
+    ports:
+      - 5431:5432
+    logging:
+      options:
+        max-size: 11m
+        max-file: "3"
     networks:
       ispa:
         ipv4_address: 172.18.0.8

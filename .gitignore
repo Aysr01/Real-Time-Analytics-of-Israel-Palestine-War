@@ -6,3 +6,4 @@ spark_test
 credentials/
 infra/.terraform*
 infra/terraform.tfstate*
+infra

@@ -1,5 +1,5 @@
 import sys
-from utils.stream_data import StreamData
+from utils.stream_comments import StreamData
 import yaml
 import logging
 

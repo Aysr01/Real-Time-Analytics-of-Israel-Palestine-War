@@ -15,6 +15,11 @@ variable "region" {
   type        = string
 }
 
+variable "zone" {
+  description = "The GCP zone"
+  type        = string
+}
+
 variable "bucket_name" {
   description = "The GCP bucket name"
   type        = string

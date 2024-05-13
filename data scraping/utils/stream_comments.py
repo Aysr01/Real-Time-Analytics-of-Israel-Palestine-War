@@ -35,29 +35,34 @@ class StreamData:
         subreddits = "+".join(subreddits)
         comments = self.reddit.subreddit(subreddits).stream.comments()
         for comment in comments:
-            comment_data = {
-                "timestamp": comment.created_utc,
-                "id": comment.id,
-                "body": comment.body,
-                "author": comment.author.name,
-                "subreddit_id": comment.subreddit_id,
-                "subreddit": comment.subreddit.display_name,
-                "ups": comment.ups,
-                "parent_id": comment.parent_id,
-                "submission": {
-                "submission_id": comment.submission.id,
-                "submission_title": comment.submission.title,
-                "submission_text": comment.submission.selftext,
-                "submission_author": comment.submission.author.name,
-                "submissions_ups": comment.submission.ups,
-                "submissions_num_comments": comment.submission.num_comments,
-                "submissions_upvote_ratio": comment.submission.upvote_ratio
+            try:
+                comment_data = {
+                    "timestamp": comment.created_utc,
+                    "id": comment.id,
+                    "body": comment.body,
+                    "author": comment.author.name,
+                    "subreddit_id": comment.subreddit_id,
+                    "subreddit": comment.subreddit.display_name,
+                    "ups": comment.ups,
+                    "parent_id": comment.parent_id,
+                    "submission": {
+                        "submission_id": comment.submission.id,
+                        "submission_title": comment.submission.title,
+                        "submission_text": comment.submission.selftext,
+                        "submission_author": comment.submission.author.name,
+                        "submissions_ups": comment.submission.ups,
+                        "submissions_num_comments": comment.submission.num_comments,
+                        "submissions_upvote_ratio": comment.submission.upvote_ratio
+                    }
                 }
-            }
-            comment_json = json.dumps(comment_data)
-            self.producer.send(self.topic, value=comment_json)
-            self.producer.flush()
-            logger.info("Comment {} from {} streamed to Kafka topic {}".format(comment.id, comment.subreddit, self.topic))
+            except Exception as e:
+                logger.error("Failed to extract data from the following comment: {}".format(comment.id))
+            else:
+                comment_json = json.dumps(comment_data)
+                self.producer.send(self.topic, value=comment_json)
+                self.producer.flush()
+                logger.info("Comment {} from {} streamed to Kafka topic {}" \
+                            .format(comment.id, comment.subreddit, self.topic))
 
     def stream_submissions(self, subreddits: List[str]):
         subreddits = "+".join(subreddits)
