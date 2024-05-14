@@ -6,4 +6,11 @@ spark_test
 credentials/
 infra/.terraform*
 infra/terraform.tfstate*
+<<<<<<< Updated upstream
 infra
+=======
+infra
+.vscode
+kafka/data/*
+spark/checkpoint/*
+>>>>>>> Stashed changes
