@@ -5,3 +5,4 @@ data scraping/utils/__pycache__/
 spark_test
 kafka/data/*
 spark/checkpoint/*
+.vscode
