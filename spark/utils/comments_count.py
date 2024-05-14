@@ -4,6 +4,7 @@ from pyspark.sql.types import StructField, StructType, StringType, IntegerType, 
 import logging
 import random
 from cassandra.cluster import Cluster
+from cassandra.auth import PlainTextAuthProvider
 
 logging.basicConfig(
     level="INFO",
@@ -14,11 +15,13 @@ logger = logging.getLogger(__name__)
 logger.info("Starting the Spark Application")
 
 
-# Create a PostgreSQL table if not exists
+# Define the table name
+cassandra_host = "cassandra"
 table_name = "reddit_ipc_comments"
 
 # Connect to the Cassandra cluster
-cluster = Cluster(['cassandra'])  # Replace with your Cassandra node IP addresses
+auth_provider = PlainTextAuthProvider(username='cassandra', password='cassandra')
+cluster = Cluster([cassandra_host], auth_provider= auth_provider)  # Replace with your Cassandra node IP addresses
 session = cluster.connect()
 
 # Create a keyspace
@@ -44,48 +47,20 @@ logger.info("Table created successfully")
 
 # Close the cluster connection
 cluster.shutdown()
-# try:
-#     conn_details = psycopg2.connect(
-#     host="postgres",
-#     database="ispac",
-#     user="postgres",
-#     password="postgres",
-#     port= '5432'
-#     )
-# except Exception as e:
-#     logging.error(f"Error while connecting to PostgreSQL: {e}")
-# else:
-#     logging.info("Connection to PostgreSQL established successfully")
-#     cursor = conn_details.cursor()
-#     cursor.execute(f"""
-#                    CREATE TABLE IF NOT EXISTS {table_name}
-#                     (
-#                         date TIMESTAMP,
-#                         label varchar(30),
-#                         comments_count INT,
-#                         total_ups INT,
-#                         PRIMARY KEY (date, label)
-#                     )"""
-#     )
-#     conn_details.commit()
-#     cursor.close()
-#     conn_details.close()
-#     logging.info("Table created successfully")
 
 
 # Create a Spark Session
-try:
-    spark = SparkSession.builder \
-                .appName("Comments_Count") \
-                .config("spark.sql.shuffle.partitions", 4) \
-                .config("spark.cassandra.connection.host", "cassandra") \
-                .config('spark.cassandra.connection.port', '9042') \
-                .getOrCreate()
+spark = SparkSession.builder \
+            .appName("Comments_Count") \
+            .config("spark.sql.shuffle.partitions", 4) \
+            .config("spark.cassandra.connection.host", "cassandra") \
+            .config('spark.cassandra.connection.port', '9042') \
+            .config('spark.cassandra.auth.username', 'cassandra') \
+            .config('spark.cassandra.auth.password', 'cassandra') \
+            .getOrCreate()
 
-    spark.sparkContext.setLogLevel("ERROR")
-    logging.info("Spark Session created successfully")
-except Exception as e:
-    logging.error(f"Error while creating Spark Session: {e}")
+spark.sparkContext.setLogLevel("ERROR")
+logging.info("Spark Session created successfully")
 
 
 # Create a UDF
@@ -132,17 +107,18 @@ comments_counts = df.withColumn("value", from_json(col("value").astype("string")
                     .select(col("window").start.alias("date"), "label", "comments_count", "total_ups")
 
 
-def writeToPsql(batch, batch_id):
+def writeToCassandra(batch, batch_id):
     batch.write\
-         .format("cassandra") \
+         .format("org.apache.spark.sql.cassandra") \
          .options(table=table_name, keyspace="reddit_keyspace") \
          .mode("append") \
          .save()
 
 write_stream = comments_counts.writeStream \
             .format("console") \
-            .foreachBatch(writeToPsql) \
-            .outputMode("append") \
+            .foreachBatch(writeToCassandra) \
+            .outputMode("update") \
+            .trigger(processingTime="5 seconds") \
             .option("checkpointLocation", "/tmp/checkpoint/") \
             .start(truncate=False)
 
