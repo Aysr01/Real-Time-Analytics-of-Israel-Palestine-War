@@ -7,3 +7,4 @@ credentials/
 infra/.terraform*
 infra/terraform.tfstate*
 infra
+.vscode
