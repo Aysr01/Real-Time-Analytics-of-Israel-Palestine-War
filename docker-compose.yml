@@ -106,20 +106,15 @@ services:
       ispa:
         ipv4_address: 172.18.0.7
 
-  postgres:
-    image: postgres:14.10-bullseye
-    container_name: postgres
-    hostname: postgres
+  cassandra:
+    image: bitnami/cassandra:latest
+    container_name: cassandra
+    hostname: cassandra
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=ispac
+      - CASSANDRA_USER=cassandra
+      - CASSANDRA_PASSWORD=cassandra
     ports:
-      - 5431:5432
-    logging:
-      options:
-        max-size: 11m
-        max-file: "3"
+      - 9042:9042
     networks:
       ispa:
         ipv4_address: 172.18.0.8
