@@ -101,8 +101,8 @@ comments_counts = df.withColumn("value", from_json(col("value").astype("string")
                     .withColumns({
                         "event_time": col("timestamp").cast(TimestampType())
                         }) \
-                    .withWatermark("event_time", "3 minutes") \
-                    .groupBy(window("event_time", "1 minute"), "label") \
+                    .withWatermark("event_time", "1 hour") \
+                    .groupBy(window("event_time", "1 day"), "label") \
                     .agg(count("id").alias("comments_count"), sum("ups").alias("total_ups")) \
                     .select(col("window").start.alias("date"), "label", "comments_count", "total_ups")
 
