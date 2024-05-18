@@ -1,0 +1,1 @@
+model/fine_tuned_bert_on_israelo-palestine-conflict.bin filter=lfs diff=lfs merge=lfs -text
