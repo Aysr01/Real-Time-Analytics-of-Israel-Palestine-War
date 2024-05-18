@@ -1,2 +1,2 @@
-model/*.bin filter=lfs diff=lfs merge=lfs -text
-model/IPCBert.bin filter=lfs diff=lfs merge=lfs -text
+model_endpoint/*.bin filter=lfs diff=lfs merge=lfs -text
+model_endpoint/IPCBert.bin filter=lfs diff=lfs merge=lfs -text
