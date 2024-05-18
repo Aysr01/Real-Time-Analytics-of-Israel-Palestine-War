@@ -4,6 +4,14 @@ from kafka import KafkaProducer
 import json
 import os
 import logging
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+
+# Install NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
 
 
 logging.basicConfig(level=logging.INFO,
@@ -26,10 +34,35 @@ class StreamData:
                             password=password)
         self.bootstrap_server = bootstrap_server
         self.topic = topic
-        self.producer = KafkaProducer(
-            bootstrap_servers=self.bootstrap_server,
-            value_serializer=lambda x: x.encode('utf-8')
-            )
+        if bootstrap_server:
+            self.producer = KafkaProducer(
+                bootstrap_servers=self.bootstrap_server,
+                value_serializer=lambda x: x.encode('utf-8')
+                )
+        self.keywords = [
+            "israel", "palestine", "hamas", "ghaza",
+            "jerusalem", "zionist", "zionism", "palestinian",
+            "israeli", "al-aqsa", 
+        ]
+        
+    def is_conflict(self, text: str) -> bool:
+        stop_words = set(stopwords.words('english'))
+        word_tokens = word_tokenize(text)
+        filtered_text = [word for word in word_tokens if word.lower() not in stop_words]
+        stemmer = PorterStemmer()
+        stemmed_text = [stemmer.stem(word) for word in filtered_text]
+        for keyword in self.keywords:
+            if keyword in stemmed_text:
+                return True
+        return False
+    
+    def retrieve_parent_content(self, id: str):
+        if id.startswith("t1"):
+            parent = self.reddit.comment(id)
+            return parent.body
+        else:
+            return None
+        
         
     def stream_comments(self, subreddits: List[str]):
         subreddits = "+".join(subreddits)
@@ -44,7 +77,7 @@ class StreamData:
                     "subreddit_id": comment.subreddit_id,
                     "subreddit": comment.subreddit.display_name,
                     "ups": comment.ups,
-                    "parent_id": comment.parent_id,
+                    "parent_content": self.retrieve_parent_content(comment.parent_id),
                     "submission": {
                         "submission_id": comment.submission.id,
                         "submission_title": comment.submission.title,
@@ -56,13 +89,16 @@ class StreamData:
                     }
                 }
             except Exception as e:
-                logger.error("Failed to extract data from the following comment: {}".format(comment.id))
+                logger.error("{}: Failed to extract data from the following comment: {}".format(e, comment.id))
             else:
-                comment_json = json.dumps(comment_data)
-                self.producer.send(self.topic, value=comment_json)
-                self.producer.flush()
-                logger.info("Comment {} from {} streamed to Kafka topic {}" \
-                            .format(comment.id, comment.subreddit, self.topic))
+                if self.is_conflict(
+                    comment.submission.title + " " + comment.submission.selftext
+                    ):
+                    comment_json = json.dumps(comment_data)
+                    self.producer.send(self.topic, value=comment_json)
+                    self.producer.flush()
+                    logger.info("Comment {} from {} streamed to Kafka topic {}" \
+                                .format(comment.id, comment.subreddit, self.topic))
 
     def stream_submissions(self, subreddits: List[str]):
         subreddits = "+".join(subreddits)
