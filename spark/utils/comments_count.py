@@ -38,11 +38,12 @@ session.set_keyspace('reddit_keyspace')
 # Create a table
 session.execute(f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
-        date TIMESTAMP PRIMARY KEY,
+        date TIMESTAMP,
         subreddit TEXT,
         label TEXT,
         comments_count INT,
-        total_ups INT
+        total_ups INT,
+        PRIMARY KEY (date, subreddit, label)
     )
 """)
 logger.info("Table created successfully")
