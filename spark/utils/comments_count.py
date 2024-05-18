@@ -3,6 +3,7 @@ from pyspark.sql.functions import col, from_json, count, window, udf, sum
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType, TimestampType, FloatType
 import logging
 import random
+import requests
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 
@@ -38,6 +39,7 @@ session.set_keyspace('reddit_keyspace')
 session.execute(f"""
     CREATE TABLE IF NOT EXISTS {table_name} (
         date TIMESTAMP PRIMARY KEY,
+        subreddit TEXT,
         label TEXT,
         comments_count INT,
         total_ups INT
@@ -65,10 +67,18 @@ logging.info("Spark Session created successfully")
 
 # Create a UDF
 @udf("string")
-def label_comment(comment_text):
-    labels = ["with israel", "with palestine", "neutral"]
-    label = random.choice(labels)
-    return label
+def label_comment(submission_title, submission_post, parent, comment_text):
+    url = "http://model-endpoint:5000/predict"
+    submission_title = submission_title if submission_title is not None else ""
+    parent = "" if parent is None else parent
+    submission_post = "" if submission_post is None else submission_post
+    data = {
+        "title": submission_title,
+        "post": submission_post + ". " + parent,
+        "comment": comment_text
+    }
+    response = requests.post(url, json=data)
+    return response.text
 
 
 comments_schema = StructType(
@@ -80,8 +90,9 @@ comments_schema = StructType(
         StructField("subreddit_id", StringType(), False),
         StructField("subreddit", StringType(), False),
         StructField("ups", IntegerType(), True),
-        StructField("parent_id", StringType(), True),
-        StructField("submission", StringType(), True)
+        StructField("parent_content", StringType(), True),
+        StructField("submission_text", StringType(), True),
+        StructField("submission_title", StringType(), True)
     ]
 )
 
@@ -97,14 +108,17 @@ logging.info("Connection to Kafka established successfully")
 
 comments_counts = df.withColumn("value", from_json(col("value").astype("string"), comments_schema)) \
                     .select("value.*") \
-                    .withColumn("label", label_comment(col("body"))) \
+                    .withColumn(
+                        "label", 
+                        label_comment(col("submission_title"), col("submission_text"), col("parent_content"), col("body"))
+                    ) \
                     .withColumns({
                         "event_time": col("timestamp").cast(TimestampType())
                         }) \
-                    .withWatermark("event_time", "1 hour") \
-                    .groupBy(window("event_time", "1 day"), "label") \
+                    .withWatermark("event_time", "15 minute") \
+                    .groupBy(window("event_time", "1 hour"), "subreddit", "label") \
                     .agg(count("id").alias("comments_count"), sum("ups").alias("total_ups")) \
-                    .select(col("window").start.alias("date"), "label", "comments_count", "total_ups")
+                    .select(col("window").start.alias("date"), "subreddit", "label", "comments_count", "total_ups")
 
 
 def writeToCassandra(batch, batch_id):
