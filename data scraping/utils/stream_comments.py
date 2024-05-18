@@ -78,15 +78,8 @@ class StreamData:
                     "subreddit": comment.subreddit.display_name,
                     "ups": comment.ups,
                     "parent_content": self.retrieve_parent_content(comment.parent_id),
-                    "submission": {
-                        "submission_id": comment.submission.id,
-                        "submission_title": comment.submission.title,
-                        "submission_text": comment.submission.selftext,
-                        "submission_author": comment.submission.author.name,
-                        "submissions_ups": comment.submission.ups,
-                        "submissions_num_comments": comment.submission.num_comments,
-                        "submissions_upvote_ratio": comment.submission.upvote_ratio
-                    }
+                    "submission_title": comment.submission.title,
+                    "submission_text": comment.submission.selftext,
                 }
             except Exception as e:
                 logger.error("{}: Failed to extract data from the following comment: {}".format(e, comment.id))
