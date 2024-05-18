@@ -120,3 +120,16 @@ services:
     networks:
       ispa:
         ipv4_address: 172.18.0.8
+
+  model-endpoint:
+    image: 'python:latest'
+    container_name: model-endpoint
+    hostname: model-endpoint
+    volumes:
+      - ./model_endpoint:/model_endpoint/
+    ports:
+      - '5000:5000'
+    entrypoint: "/bin/bash /model_endpoint/scripts/entrypoint.sh"
+    networks:
+      ispa:
+        ipv4_address: 172.18.0.9
