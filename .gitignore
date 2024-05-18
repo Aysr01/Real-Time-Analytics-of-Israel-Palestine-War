@@ -6,3 +6,4 @@ spark_test
 kafka/data/*
 spark/checkpoint/*
 .vscode
+model_endpoint/__pycache__/
