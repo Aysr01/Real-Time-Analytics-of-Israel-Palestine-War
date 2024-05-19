@@ -47,7 +47,6 @@ def predict():
         title = request.json['title']
         post = request.json['post']
         comment = request.json['comment']
-        logging.info(f"Title: {title}, Post: {post}, Comment: {comment}")
         return get_predictions(title, post, comment)
     else:
         return "Hello, please send a POST request with the title, post and comment."
