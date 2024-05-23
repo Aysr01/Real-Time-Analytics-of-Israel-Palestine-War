@@ -48,5 +48,13 @@ To classify opinions into three categories (with Palestine, with Israel, neutral
 | macro avg        | 0.73      | 0.73   | 0.73     | 2632    |
 | weighted avg     | 0.73      | 0.73   | 0.73     | 2632    |
 
+## DashBoard
+
+![Israelo-Palestine-conflict_page-0001](https://github.com/Aysr01/Real-Time-Analytics-of-Israel-Palestine-War/assets/114707989/b7ce1d87-c910-4d1e-90fb-81e5fa006613)
+
+The dashboard provides insights into comments related to the Israel-Palestine issue over an 18-hour period. It shows a total of 2071 comments, with the majority coming from the "IsraelPalestine" subreddit. Opinions are categorized as "with palestine," "with israel," and "neutral." The "with palestine" opinion has the highest number of comments, followed by "with israel" and then "neutral." The cumulative comment count graph indicates a steady increase in comments for all opinions, with "with palestine" consistently leading. This suggests a high level of engagement and a significant leaning towards the "with palestine" opinion in the discussions.
+
+
+
 
 
